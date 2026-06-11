@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Qamar</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background-color: #000;
+      overflow-x: hidden;
+    }
+
+    #preloader {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      flex-direction: column;
+      transition: opacity 1.2s ease-in-out;
+    }
+
+    #preloader video {
+      width: 60vw;
+      max-width: 500px;
+      height: auto;
+      border-radius: 12px;
+      transition: opacity 1.2s ease-in-out;
+    }
+
+    #preloader.slide-to-logo1 video { opacity: 0; }
+
+    #placeholderImage {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 60vw;
+      max-width: 500px;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      transition: transform 1.2s ease-in-out, opacity 1.2s ease-in-out;
+    }
+
+    #preloader.slide-to-logo1 #placeholderImage {
+      opacity: 1;
+      transform: translate(-50%, -50%) translateY(-35vh) scale(0.5);
+    }
+
+    .page {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .logo1 {
+      position: absolute;
+      top: 39px;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: 250px;
+      z-index: 2;
+    }
+
+    .background-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .gallery-section {
+      position: relative;
+      background-color: #000;
+      padding: 60px 0;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .carousel {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 40px;
+      margin: 0 auto;
+      padding: 0 20px;
+      width: 100%;
+      max-width: 100vw;
+      flex-wrap: wrap;
+      cursor: grab;
+      user-select: none;
+    }
+
+    .artwork {
+      flex: 0 0 30%;
+      text-align: center;
+      transition: transform 0.6s ease, opacity 0.6s ease;
+      padding: 10px;
+      color: white;
+    }
+
+    .artwork img {
+      width: 100%;
+      height: auto;
+      box-shadow:
+        0 0 25px 6px rgba(255, 255, 255, 0.22),
+        0 0 70px 18px rgba(255, 255, 255, 0.09),
+        0 20px 40px rgba(0, 0, 0, 0.6);
+      transition: transform 0.5s ease, opacity 0.5s ease, box-shadow 0.5s ease;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+    }
+
+    .artwork.center img {
+      box-shadow:
+        0 0 40px 12px rgba(255, 255, 255, 0.38),
+        0 0 100px 35px rgba(255, 255, 255, 0.14),
+        0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .artwork.side img {
+      box-shadow:
+        0 0 18px 4px rgba(255, 255, 255, 0.14),
+        0 0 50px 12px rgba(255, 255, 255, 0.06),
+        0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .artwork.side.left img {
+      transform: perspective(800px) rotateY(20deg);
+      opacity: 0.7;
+    }
+
+    .artwork.side.right img {
+      transform: perspective(800px) rotateY(-20deg);
+      opacity: 0.7;
+    }
+
+    .artwork.center img {
+      transform: scale(1.1);
+      opacity: 1;
+    }
+
+    .artwork .info {
+      font-size: 1.2rem;
+      margin-top: 20px;
+      color: #fff;
+      line-height: 1.4;
+    }
+
+    #carousel1 .artwork .info { margin-top: 40px; }
+
+    .artwork.side.left .info,
+    .artwork.side.right .info {
+      opacity: 0.6;
+    }
+
+    .artwork.hidden { display: none; }
+
+    .carousel-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: rgba(255,255,255,0.05);
+      border: 2px solid white;
+      color: white;
+      font-size: 2rem;
+      padding: 10px 16px;
+      cursor: pointer;
+      border-radius: 50%;
+      z-index: 5;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .carousel-arrow:hover { background-color: rgba(255,255,255,0.2); }
+    .left-arrow  { left: 10px; }
+    .right-arrow { right: 10px; }
+
+    /* Pulse quand on est au bout — indique que ça va boucler */
+    @keyframes arrowPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(255,255,255,0.5); transform: translateY(-50%) scale(1); }
+      50%  { box-shadow: 0 0 0 10px rgba(255,255,255,0.0); transform: translateY(-50%) scale(1.13); }
+      100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); transform: translateY(-50%) scale(1); }
+    }
+
+    .carousel-arrow.pulse {
+      animation: arrowPulse 1.2s ease-in-out infinite;
+      background-color: rgba(255,255,255,0.12);
+    }
+
+    .artwork.second-line img { width: 85%; }
+
+    .artwork.second-line.side.left img {
+      transform: perspective(800px) rotateY(20deg) scale(0.9);
+      opacity: 0.6;
+    }
+
+    .artwork.second-line.side.right img {
+      transform: perspective(800px) rotateY(-20deg) scale(0.9);
+      opacity: 0.6;
+    }
+
+    .artwork.second-line.center img {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    .triptych-vertical {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      width: auto;
+    }
+
+    .triptych-v-item { display: flex; justify-content: center; }
+
+    .triptych-v-item img {
+      width: 80px;
+      height: auto;
+      display: block;
+      box-shadow:
+        0 0 25px 6px rgba(255, 255, 255, 0.22),
+        0 0 70px 18px rgba(255, 255, 255, 0.09),
+        0 20px 40px rgba(0, 0, 0, 0.6);
+      transition: box-shadow 0.5s ease;
+      user-select: none;
+      -webkit-user-drag: none;
+      cursor: zoom-in;
+      pointer-events: auto;
+    }
+
+    .triptych {
+      display: flex;
+      flex-direction: row;
+      gap: 16px;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+    }
+
+    .triptych .mini-art {
+      flex: 1;
+      width: 30%;
+      height: auto;
+      display: block;
+      box-shadow:
+        0 0 25px 6px rgba(255, 255, 255, 0.22),
+        0 0 70px 18px rgba(255, 255, 255, 0.09),
+        0 20px 40px rgba(0, 0, 0, 0.6);
+      transition: box-shadow 0.5s ease;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.85);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(6px);
+    }
+
+    .modal.open { display: flex; }
+
+    .modal-content {
+      position: relative;
+      max-width: 90vw;
+      max-height: 90vh;
+    }
+
+    .modal-content img {
+      max-width: 100%;
+      max-height: 90vh;
+      object-fit: contain;
+      display: block;
+      pointer-events: auto;
+      box-shadow:
+        0 0 60px 20px rgba(255, 255, 255, 0.18),
+        0 0 120px 50px rgba(255, 255, 255, 0.07);
+    }
+
+    .close {
+      position: absolute;
+      top: -36px;
+      right: 0;
+      color: white;
+      font-size: 2rem;
+      cursor: pointer;
+      line-height: 1;
+      user-select: none;
+    }
+
+    .email-link {
+      position: absolute;
+      top: 44px;
+      left: 30px;
+      color: white;
+      text-decoration: none;
+      letter-spacing: 0.15em;
+      font-size: 0.85rem;
+      z-index: 3;
+    }
+
+    .email-link:hover { text-decoration: underline; }
+
+    footer { padding: 20px; text-align: center; }
+
+    .copyright {
+      color: rgba(255,255,255,0.4);
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+    }
+
+    @media (max-width: 768px) {
+      #preloader video { width: 85vw; }
+      #placeholderImage { width: 85vw; }
+      .logo1 { max-width: 160px; top: 24px; }
+      .gallery-section { padding: 40px 0; }
+      .carousel { gap: 0; padding: 0 60px; }
+      .artwork { flex: 0 0 100%; width: 100%; padding: 10px 0; }
+      .artwork.side.left, .artwork.side.right { display: none; }
+      .artwork.center img { transform: none; width: 100%; }
+      .artwork.second-line img { width: 100%; }
+      .artwork.second-line.center img { transform: none; }
+      .artwork .info { font-size: 0.95rem; margin-top: 16px; }
+      #carousel1 .artwork .info { margin-top: 16px; }
+      .carousel-arrow { font-size: 1.4rem; padding: 8px 12px; top: 40%; }
+      .left-arrow  { left: 4px; }
+      .right-arrow { right: 4px; }
+      .triptych-vertical { gap: 14px; }
+      .email-link { font-size: 0.85rem; padding: 30px 0 16px; }
+    }
+
+    @media (max-width: 400px) {
+      .logo1 { max-width: 130px; }
+      .carousel { padding: 0 48px; }
+      .carousel-arrow { font-size: 1.2rem; padding: 6px 10px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="preloader">
+    <video id="introVideo" autoplay muted playsinline>
+      <source src="intro.MP4" type="video/mp4" />
+    </video>
+    <img src="logo1.png" alt="Logo Qamar" id="placeholderImage" />
+  </div>
+
+  <div class="page">
+    <img src="logo1.png" alt="Qamar Logo" class="logo1" />
+    <a href="mailto:tonadresse@email.com" class="email-link">E-MAIL</a>
+    <img src="IMG_6480.jpg" alt="Œuvre principale" class="background-image" />
+  </div>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="modalClose">×</span>
+      <img id="modal-image" src="" alt="Œuvre agrandie" />
+    </div>
+  </div>
+
+  <!-- GALERIE 1 -->
+  <section class="gallery-section">
+    <button id="prevBtn1" class="carousel-arrow left-arrow">←</button>
+    <button id="nextBtn1" class="carousel-arrow right-arrow">→</button>
+    <div class="carousel" id="carousel1">
+      <div class="artwork side left">
+        <img src="tableau1.jpg" alt="PEACE" />
+        <div class="info"><div class="title">" PEACE "</div><div class="details">OIL PAINTING<br>OAK WOOD<br>120 x 120 cm<br>2023</div></div>
+      </div>
+      <div class="artwork center">
+        <img src="tableau2.jpg" alt="RIZE" />
+        <div class="info"><div class="title">" RIZE "</div><div class="details">OIL PAINTING<br>OAK WOOD<br>120 x 120 cm<br>2024</div></div>
+      </div>
+      <div class="artwork side right">
+        <img src="tableau3.jpg" alt="FUTURE TROUBLES" />
+        <div class="info"><div class="title">" FUTURE TROUBLES "</div><div class="details">OIL PAINTING<br>OAK WOOD<br>120 x 120 cm<br>2024</div></div>
+      </div>
+      <div class="artwork hidden">
+        <img src="tableau4.jpg" alt="ROOTS" />
+        <div class="info"><div class="title">" ROOTS "</div><div class="details">OIL PAINTING<br>OAK WOOD<br>120 x 120 cm<br>2025</div></div>
+      </div>
+      <div class="artwork hidden">
+        <img src="tableau5.jpg" alt="CONNECTED" />
+        <div class="info"><div class="title">" CONNECTED "</div><div class="details">OIL PAINTING<br>OAK WOOD<br>120 x 120 cm<br>2024</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GALERIE 2 -->
+  <section class="gallery-section">
+    <button id="prevBtn2" class="carousel-arrow left-arrow">←</button>
+    <button id="nextBtn2" class="carousel-arrow right-arrow">→</button>
+    <div class="carousel" id="carousel2">
+      <div class="artwork second-line hidden">
+        <img src="tableau15.jpg" alt="STAY FOCUSED" />
+        <div class="info"><div class="title">" STAY FOCUSED "</div><div class="details">OIL PAINTING<br>OAK WOOD<br>95 x 75 cm<br>2023</div></div>
+      </div>
+      <div class="artwork second-line side right">
+        <img src="tableau8.jpg" alt="CHILD'S TOY" />
+        <div class="info"><div class="title">" CHILD'S TOY "</div><div class="details">OIL PAINTING<br>OAK WOOD<br>95 x 75 cm<br>2024</div></div>
+      </div>
+      <div class="artwork second-line hidden">
+        <img src="tableau11.jpg" alt="FANOUS" />
+        <div class="info"><div class="title">" FANOUS "</div><div class="details">OIL PAINTING<br>MAHOGANY WOOD<br>95 x 75 cm<br>2024</div></div>
+      </div>
+      <div class="artwork second-line center">
+        <img src="tableau7.jpg" alt="FAMILY LOVE" />
+        <div class="info"><div class="title">" FAMILY LOVE "</div><div class="details">OIL PAINTING<br>OAK WOOD<br>95 x 75 cm<br>2024<br>SOLD</div></div>
+      </div>
+      <div class="artwork second-line hidden">
+        <img src="tableau9.jpg" alt="FIGHT OR DIE" />
+        <div class="info"><div class="title">" FIGHT OR DIE "</div><div class="details">OIL PAINTING<br>OAK WOOD<br>95 x 75 cm<br>2023<br>SOLD</div></div>
+      </div>
+      <div class="artwork second-line side left">
+        <img src="tableau6.jpg" alt="IRM" />
+        <div class="info"><div class="title">" IRM "</div><div class="details">OIL PAINTING<br>CANVAS<br>120 x 100 cm<br>2024</div></div>
+      </div>
+      <div class="artwork second-line hidden">
+        <img src="tableau17.jpg" alt="POWER" />
+        <div class="info"><div class="title">" POWER "</div><div class="details">OIL PAINTING<br>OAK WOOD<br>95 x 75 cm<br>2024</div></div>
+      </div>
+      <div class="artwork second-line hidden">
+        <img src="tableau14.jpg" alt="MOTIVATION" />
+        <div class="info"><div class="title">" MOTIVATION "</div><div class="details">OIL PAINTING<br>OAK WOOD<br>95 x 75 cm<br>2024</div></div>
+      </div>
+      <div class="artwork second-line hidden">
+        <img src="tableau10.jpg" alt="PIGEON" />
+        <div class="info"><div class="title">" PIGEON "</div><div class="details">OIL PAINTING<br>OAK WOOD<br>95 x 75 cm<br>2024</div></div>
+      </div>
+      <div class="artwork second-line hidden">
+        <img src="tableau16.jpg" alt="DOG" />
+        <div class="info"><div class="title">" DOG "</div><div class="details">OIL PAINTING<br>OAK WOOD<br>95 x 75 cm<br>2024</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GALERIE 3 -->
+  <section class="gallery-section">
+    <button id="prevBtn3" class="carousel-arrow left-arrow">←</button>
+    <button id="nextBtn3" class="carousel-arrow right-arrow">→</button>
+    <div class="carousel" id="carousel3">
+      <div class="artwork second-line side left">
+        <img src="tableau12.jpg" alt="RED FLOWER" />
+        <div class="info"><div class="title">" RED FLOWER "</div><div class="details">OIL PAINTING<br>OAK WOOD<br>95 x 75 cm<br>2024</div></div>
+      </div>
+      <div class="artwork second-line center">
+        <img src="tableau13.jpg" alt="أَصَالَة" />
+        <div class="info"><div class="title">" أَصَالَة "</div><div class="details">OIL PAINTING<br>OAK WOOD<br>95 x 75 cm<br>2024</div></div>
+      </div>
+      <div class="artwork second-line side right">
+        <img src="tableau18.jpg" alt="عُود" />
+        <div class="info"><div class="title">" عُود "</div><div class="details">OIL PAINTING<br>OAK WOOD<br>95 x 75 cm<br>2025</div></div>
+      </div>
+      <div class="artwork second-line hidden">
+        <img src="tableau12.jpg" alt="RED FLOWER" />
+        <div class="info"><div class="title">" RED FLOWER "</div><div class="details">OIL PAINTING<br>OAK WOOD<br>95 x 75 cm<br>2024</div></div>
+      </div>
+      <div class="artwork second-line hidden triptych-vertical-card">
+        <div class="triptych-vertical">
+          <div class="triptych-v-item"><img src="mini1.jpg" alt="Mini 1" style="width:130px;height:130px;object-fit:cover;" /></div>
+          <div class="triptych-v-item"><img src="mini2.jpg" alt="Mini 2" style="width:130px;height:130px;object-fit:cover;" /></div>
+          <div class="triptych-v-item"><img src="mini3.jpg" alt="Mini 3" style="width:130px;height:130px;object-fit:cover;" /></div>
+        </div>
+        <div class="info"><div class="title">" عَنْبَر "</div><div class="details">OIL PAINTING<br>OAK WOOD<br>40 x 40 cm<br>2024</div></div>
+      </div>
+    </div>
+  </section>
+
+
+
+  <footer>
+    <p class="copyright">COPYRIGHT. ALL RIGHTS RESERVED.</p>
+  </footer>
+
+  <script>
+    const video     = document.getElementById('introVideo');
+    const preloader = document.getElementById('preloader');
+
+    video.addEventListener('ended', () => {
+      preloader.classList.add('slide-to-logo1');
+      setTimeout(() => { preloader.style.display = 'none'; }, 1600);
+    });
+
+    // Stocke toutes les instances de carousel
+    const carousels = [];
+
+    function initCarousel(carouselId, prevId, nextId) {
+      const artworks = Array.from(document.querySelectorAll('#' + carouselId + ' .artwork'));
+      const prevBtn  = document.getElementById(prevId);
+      const nextBtn  = document.getElementById(nextId);
+      const section  = document.getElementById(carouselId).closest('.gallery-section');
+      const total    = artworks.length;
+      let current    = 1;
+
+      function update() {
+        artworks.forEach((art, i) => {
+          art.classList.remove('left', 'right', 'center', 'hidden', 'side');
+          if      (i === current - 1) art.classList.add('side', 'left');
+          else if (i === current)     art.classList.add('center');
+          else if (i === current + 1) art.classList.add('side', 'right');
+          else                        art.classList.add('hidden');
+        });
+        nextBtn.classList.toggle('pulse', current === total - 1);
+        prevBtn.classList.toggle('pulse', current === 0);
+      }
+
+      function goNext() { current = (current + 1) % total; update(); }
+      function goPrev() { current = (current - 1 + total) % total; update(); }
+
+      prevBtn.addEventListener('click', goPrev);
+      nextBtn.addEventListener('click', goNext);
+
+      carousels.push({ section, goNext, goPrev });
+      update();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initCarousel('carousel1', 'prevBtn1', 'nextBtn1');
+      initCarousel('carousel2', 'prevBtn2', 'nextBtn2');
+      initCarousel('carousel3', 'prevBtn3', 'nextBtn3');
+
+      // ── DRAG GLOBAL (souris + touch) ──
+      let startX = 0;
+      let startY = 0;
+      let activeCarousel = null;
+      let pointerDown = false;
+
+      function getCarouselAtPoint(x, y) {
+        return carousels.find(c => {
+          const r = c.section.getBoundingClientRect();
+          return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+        }) || null;
+      }
+
+      // TOUCH
+      document.addEventListener('touchstart', e => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        activeCarousel = getCarouselAtPoint(startX, startY);
+      }, { passive: true });
+
+      document.addEventListener('touchend', e => {
+        if (!activeCarousel) return;
+        const dx = e.changedTouches[0].clientX - startX;
+        const dy = e.changedTouches[0].clientY - startY;
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+          dx < 0 ? activeCarousel.goNext() : activeCarousel.goPrev();
+        }
+        activeCarousel = null;
+      }, { passive: true });
+
+      // SOURIS
+      document.addEventListener('mousedown', e => {
+        // Ignorer les clics sur les flèches
+        if (e.target.classList.contains('carousel-arrow')) return;
+        startX = e.clientX;
+        startY = e.clientY;
+        activeCarousel = getCarouselAtPoint(startX, startY);
+        if (activeCarousel) {
+          pointerDown = true;
+          document.body.style.cursor = 'grabbing';
+          document.body.style.userSelect = 'none';
+        }
+      });
+
+      document.addEventListener('mouseup', e => {
+        if (!pointerDown || !activeCarousel) { pointerDown = false; return; }
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+          dx < 0 ? activeCarousel.goNext() : activeCarousel.goPrev();
+        }
+        pointerDown = false;
+        activeCarousel = null;
+      });
+
+      document.addEventListener('dragstart', e => e.preventDefault());
+
+      // ── TRACKPAD (deux doigts gauche/droite) ──
+      carousels.forEach((c) => {
+        let lastSlide = 0;
+        c.section.addEventListener('wheel', e => {
+          const now = Date.now();
+          if (Math.abs(e.deltaX) < 5) return;
+          e.preventDefault();
+          if (now - lastSlide < 600) return; // anti-rebond
+          lastSlide = now;
+          if (e.deltaX > 0) c.goNext();
+          else              c.goPrev();
+        }, { passive: false });
+      });
+
+      // ── MODAL ──
+      const modal      = document.getElementById('modal');
+      const modalImg   = document.getElementById('modal-image');
+      const modalClose = document.getElementById('modalClose');
+
+      document.querySelectorAll('.artwork img').forEach(img => {
+        img.style.pointerEvents = 'none';
+        img.style.cursor = 'default';
+      });
+
+      function closeModal() { modal.classList.remove('open'); }
+      modalClose.addEventListener('click', closeModal);
+      modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+      // ── PROTECTION IMAGES ──
+      // 1. Bloquer clic droit
+      document.addEventListener('contextmenu', e => {
+        if (e.target.tagName === 'IMG') e.preventDefault();
+      });
+
+      // 2. Bloquer drag & drop des images
+      document.querySelectorAll('img').forEach(img => {
+        img.addEventListener('dragstart', e => e.preventDefault());
+        img.setAttribute('draggable', 'false');
+      });
+
+      // 3. Bloquer Ctrl+S / Ctrl+U / F12 / Ctrl+Shift+I
+      document.addEventListener('keydown', e => {
+        if (
+          (e.ctrlKey && ['s','u','p'].includes(e.key.toLowerCase())) ||
+          (e.ctrlKey && e.shiftKey && ['i','j','c'].includes(e.key.toLowerCase())) ||
+          e.key === 'F12'
+        ) {
+          e.preventDefault();
+        }
+      });
+
+      // 4. Overlay transparent sur chaque image pour bloquer les clics directs
+      document.querySelectorAll('.artwork img, .triptych-v-item img').forEach(img => {
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'position:relative;display:inline-block;width:100%;';
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+          position:absolute;
+          top:0;left:0;
+          width:100%;height:100%;
+          z-index:2;
+          user-select:none;
+        `;
+        img.parentNode.insertBefore(wrapper, img);
+        wrapper.appendChild(img);
+        wrapper.appendChild(overlay);
+        // Clic bloqué — pas de modal
+        overlay.addEventListener('click', e => e.preventDefault());
+        overlay.addEventListener('contextmenu', e => e.preventDefault());
+      });
+
+
+    });
+  </script>
+
+</body>
+</html>
